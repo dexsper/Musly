@@ -33,6 +33,7 @@ class NowPlayingScreen extends StatefulWidget {
 class _NowPlayingScreenState extends State<NowPlayingScreen>
     with SingleTickerProviderStateMixin {
   String? _cachedImageUrl;
+  String? _cachedThumbnailUrl;
   String? _cachedCoverArtId;
   late AnimationController _bgAnimationController;
   bool _showLyrics = false;
@@ -123,6 +124,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
               transformAlignment: Alignment.center,
               child: _AlbumArtworkSection(
                 imageUrl: _cachedImageUrl ?? '',
+                thumbnailUrl: _cachedThumbnailUrl,
                 size: artworkSize,
               ),
             ),
@@ -244,8 +246,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         if (_cachedCoverArtId != song.coverArt) {
           _cachedCoverArtId = song.coverArt;
           if (isLocalFilePath(song.coverArt)) {
-            
             _cachedImageUrl = song.coverArt;
+            _cachedThumbnailUrl = song.coverArt;
           } else {
             final subsonicService = Provider.of<SubsonicService>(
               context,
@@ -254,6 +256,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             _cachedImageUrl = subsonicService.getCoverArtUrl(
               song.coverArt,
               size: 600,
+            );
+            _cachedThumbnailUrl = subsonicService.getCoverArtUrl(
+              song.coverArt,
+              size: 200,
             );
           }
         }
@@ -388,6 +394,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                                           transformAlignment: Alignment.center,
                                           child: _AlbumArtworkSection(
                                             imageUrl: _cachedImageUrl ?? '',
+                                            thumbnailUrl: _cachedThumbnailUrl,
                                             size: artworkSize,
                                           ),
                                         ),
@@ -1027,9 +1034,14 @@ class _PlayerHeader extends StatelessWidget {
 
 class _AlbumArtworkSection extends StatelessWidget {
   final String imageUrl;
+  final String? thumbnailUrl;
   final double size;
 
-  const _AlbumArtworkSection({required this.imageUrl, required this.size});
+  const _AlbumArtworkSection({
+    required this.imageUrl,
+    this.thumbnailUrl,
+    required this.size,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1063,16 +1075,26 @@ class _AlbumArtworkSection extends StatelessWidget {
                                 _buildNoArtPlaceholder(ctx),
                           )
                         : CachedNetworkImage(
-                            key: ValueKey(imageUrl), 
+                            key: ValueKey(imageUrl),
                             imageUrl: imageUrl,
-                            fit: BoxFit.contain, 
-                            memCacheWidth: 600, 
-                            
+                            fit: BoxFit.contain,
+                            memCacheWidth: 600,
+                            maxWidthDiskCache: 600,
+                            maxHeightDiskCache: 600,
                             useOldImageOnUrlChange: true,
-                            fadeInDuration:
-                                Duration.zero, 
+                            fadeInDuration: Duration.zero,
                             fadeOutDuration: Duration.zero,
-                            placeholder: (_, _) => _buildLoadingPlaceholder(),
+                            placeholder: (_, _) =>
+                                thumbnailUrl != null && thumbnailUrl!.isNotEmpty
+                                    ? CachedNetworkImage(
+                                        imageUrl: thumbnailUrl!,
+                                        fit: BoxFit.contain,
+                                        memCacheWidth: 200,
+                                        fadeInDuration: Duration.zero,
+                                        errorWidget: (_, _, _) =>
+                                            _buildLoadingPlaceholder(),
+                                      )
+                                    : _buildLoadingPlaceholder(),
                             errorWidget: (ctx, e, _) =>
                                 _buildNoArtPlaceholder(ctx),
                           )
@@ -2223,13 +2245,10 @@ class _VolumeSliderState extends State<_VolumeSlider> {
   double _dragValue = 0.0;
   double _systemVolume = 0.5;
   StreamSubscription<double>? _volumeSubscription;
-  
-  PlayerProvider? _playerProvider;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _playerProvider = context.read<PlayerProvider>();
   }
 
   @override
@@ -2256,15 +2275,6 @@ class _VolumeSliderState extends State<_VolumeSlider> {
   @override
   void dispose() {
     _volumeSubscription?.cancel();
-    
-    if (Platform.isIOS) {
-      final player = _playerProvider;
-      if (player != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          player.reactivateAudioSession();
-        });
-      }
-    }
     super.dispose();
   }
 

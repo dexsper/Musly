@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:io';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/models.dart';
@@ -1380,27 +1381,17 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   Future<void> reactivateAudioSession() async {
-    
-    final wasPlaying = _isPlaying;
-
     await _androidSystemService.requestAudioFocus();
 
     if (_currentSong != null) {
       _updateAllServices();
     }
 
-    if (wasPlaying && !_castService.isConnected && !_upnpService.isConnected) {
-      
-      _reactivatingSession = true;
+    if (Platform.isIOS) {
       try {
-        await _audioPlayer.pause();
-        await _audioPlayer.play();
-      } finally {
-        _reactivatingSession = false;
-        notifyListeners();
-        
-        _updateAndroidAuto();
-      }
+        final session = await AudioSession.instance;
+        await session.setActive(true);
+      } catch (_) {}
     }
   }
 
