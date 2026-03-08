@@ -384,9 +384,16 @@ class _SettingsDisplayTabState extends State<SettingsDisplayTab> {
   }
 
   double _artworkPreviewRadius() {
+    const previewSize = 108.0;
+    // The corner radius setting is applied in raw pixels to every artwork size.
+    // The most visible use-case is the song-tile thumbnail (50 × 50 logical px).
+    // Scale the radius proportionally so the preview matches the visual roundness
+    // the user will actually see in the song list.
+    const referenceSize = 50.0;
     if (_artworkShape == 'circle') return 9999.0;
     if (_artworkShape == 'square') return 0.0;
-    return _albumArtCornerRadius;
+    return (_albumArtCornerRadius * previewSize / referenceSize)
+        .clamp(0.0, previewSize / 2);
   }
 
   List<BoxShadow>? _artworkPreviewShadow() {
