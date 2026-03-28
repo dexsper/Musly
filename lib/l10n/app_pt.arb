@@ -1,5 +1,5 @@
 {
-  "@@locale": "pt",
+  "@@locale": "pt-PT",
   "@@last_modified": "2026-02-07T16:10:00Z",
   "appName": "Musly",
   "@appName": {
@@ -1209,6 +1209,14 @@
   "artistDataNotFound": "Artista não foi encontrado",
   "@artistDataNotFound": {
     "description": "Error state on the artist screen when artist data fails to load"
+  },
+  "addedArtistToQueue": "Adicionado artista à fila",
+  "@addedArtistToQueue": {
+    "description": "Snackbar when user adds artist to queue"
+  },
+  "addedArtistToQueueError": "Falha ao adicionar artista à fila",
+  "@addedArtistToQueueError": {
+    "description": "Error shown in snackbar when adding artist to queue fails"
   },
   "@_CAST_DLNA": {},
   "casting": "Transmitindo",
